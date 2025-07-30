@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoPaw - AI Companion for Dementia Care</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-areas: 
+                "header"
+                "chat"
+                "status";
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            gap: 15px;
+            padding: 15px;
+        }
+        
+        .header {
+            grid-area: header;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1em;
+        }
+        
+        .chat-section {
+            grid-area: chat;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .memory-indicator {
+            font-size: 0.9em;
+            color: #718096;
+            font-weight: normal;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding-right: 10px;
+            min-height: 300px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            border-radius: 12px;
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            margin-left: 20%;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .bot-message {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            margin-right: 20%;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .timestamp {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        .memory-badge {
+            background: #48bb78;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            margin-left: 8px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .speak-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            min-width: 120px;
+        }
+        
+        .speak-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .speak-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .recording {
+            background: linear-gradient(135deg, #4299E1, #3182CE) !important;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .thinking {
+            background: linear-gradient(135deg, #ED8936, #DD6B20) !important;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .status-bar {
+            grid-area: status;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 10px 15px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #48bb78;
+        }
+        
+        .error-message {
+            background: #fed7d7;
+            border: 1px solid #fc8181;
+            color: #c53030;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .typing-indicator {
+            opacity: 0.7;
+            font-style: italic;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .control-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: #cbd5e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐾 EchoPaw</h1>
+            <p>AI-Powered Therapeutic Companion for Dementia Care</p>
+            <div style="margin-top: 8px; font-size: 0.9em; color: #a0aec0;">
+                Newcastle University | Shreyas Ravi | Patrick Degenaar
+            </div>
+        </div>
+        
+        <div class="chat-section">
+            <div class="section-title">
+                Conversation
+                <span class="memory-indicator" id="memoryCount">Memories: 0</span>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will be added here -->
+            </div>
+            
+            <div class="input-area">
+                <button class="speak-btn" id="speakBtn" onclick="startListening()">
+                    🎤 Speak Now
+                </button>
+            </div>
+            
+            <div class="controls">
+                <button class="control-btn" onclick="clearChat()">Clear Chat</button>
+                <button class="control-btn" onclick="showMemoryStats()">Memory Stats</button>
+                <button class="control-btn" onclick="checkStatus()">System Status</button>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot" id="connectionDot"></div>
+                <span id="connectionStatus">Connecting...</span>
+            </div>
+            <div class="status-item">
+                <span id="deviceInfo">Loading...</span>
+            </div>
+            <div class="status-item">
+                <span id="conversationLength">Messages: 0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let messageCount = 0;
+        let isRecording = false;
+        let conversationHistory = [];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkStatus();
+            addWelcomeMessage();
+        });
+        
+        function addMessage(text, isUser = false, memoryCount = 0) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            let memoryBadge = '';
+            if (!isUser && memoryCount > 0) {
+                memoryBadge = `<span class="memory-badge">💾 ${memoryCount}</span>`;
+            }
+            
+            messageDiv.innerHTML = `
+                <div>${text}${memoryBadge}</div>
+                <div class="timestamp">${timeString}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messageCount++;
+            
+            // Update conversation length
+            document.getElementById('conversationLength').textContent = `Messages: ${messageCount}`;
+        }
+        
+        function addWelcomeMessage() {
+            setTimeout(() => {
+                addMessage("Hello! I'm EchoPaw, your AI companion. How are you feeling today?", false);
+            }, 1000);
+        }
+        
+        function showError(message) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `Error: ${message}`;
+            messagesContainer.appendChild(errorDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        async function startListening() {
+            const speakBtn = document.getElementById('speakBtn');
+            
+            if (isRecording) return;
+            
+            isRecording = true;
+            speakBtn.textContent = '🎤 Listening...';
+            speakBtn.classList.add('recording');
+            speakBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/listen', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ duration: 5 })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.transcription && data.transcription.trim()) {
+                    addMessage(data.transcription, true);
+                    await getAIResponse(data.transcription);
+                } else {
+                    addMessage("Sorry, I didn't catch that. Please try again.", false);
+                }
+                
+            } catch (error) {
+                console.error('STT Error:', error);
+                showError("Microphone error. Please check your microphone connection.");
+            } finally {
+                isRecording = false;
+                speakBtn.textContent = '🎤 Speak Now';
+                speakBtn.classList.remove('recording');
+                speakBtn.disabled = false;
+            }
+        }
+
+        async function getAIResponse(userMessage) {
+            const speakBtn = document.getElementById('speakBtn');
+            
+            // Show thinking state
+            speakBtn.textContent = '🤔 Thinking...';
+            speakBtn.classList.add('thinking');
+            speakBtn.disabled = true;
+            
+            // Add typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message typing-indicator';
+            typingDiv.innerHTML = '<div>EchoPaw is thinking...</div>';
+            typingDiv.id = 'typing-indicator';
+            document.getElementById('chatMessages').appendChild(typingDiv);
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMessage })
+                });
+                
+                const data = await response.json();
+                
+                // Remove typing indicator
+                const typing = document.getElementById('typing-indicator');
+                if (typing) typing.remove();
+                
+                if (response.ok && data.success) {
+                    addMessage(data.response, false, data.memories_used || 0);
+                    
+                    // Update memory count
+                    updateMemoryCount();
+                    
+                    // Play TTS audio if available
+                    if (data.audio_url) {
+                        playAudio(data.audio_url);
+                    }
+                } else {
+                    showError(data.error || "Unknown error occurred");
+                }
+                
+            } catch (error) {
+                console.error('Chat Error:', error);
+                const typing = document.getElementById('typing-indicator');
+                if (typing) typing.remove();
+                showError("Connection error. Please check your internet connection.");
+            } finally {
+                speakBtn.textContent = '🎤 Speak Now';
+                speakBtn.classList.remove('thinking');
+                speakBtn.disabled = false;
+            }
+        }
+
+        function playAudio(audioUrl) {
+            try {
+                const audio = new Audio(audioUrl);
+                audio.play().catch(e => {
+                    console.error('Audio playback failed:', e);
+                });
+            } catch (e) {
+                console.error('Audio creation failed:', e);
+            }
+        }
+        
+        async function checkStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update connection status
+                    document.getElementById('connectionDot').style.background = '#48bb78';
+                    document.getElementById('connectionStatus').textContent = 'Connected';
+                    
+                    // Update device info
+                    const deviceInfo = `STT: ${data.devices?.stt || 'unknown'} | LLM: ${data.devices?.llm || 'unknown'}`;
+                    document.getElementById('deviceInfo').textContent = deviceInfo;
+                    
+                    // Update memory count
+                    if (data.memory_stats) {
+                        const memCount = data.memory_stats.current_memories || 0;
+                        document.getElementById('memoryCount').textContent = `Memories: ${memCount}`;
+                    }
+                    
+                } else {
+                    throw new Error(data.error || 'Status check failed');
+                }
+            } catch (error) {
+                console.error('Status check failed:', error);
+                document.getElementById('connectionDot').style.background = '#f56565';
+                document.getElementById('connectionStatus').textContent = 'Disconnected';
+                document.getElementById('deviceInfo').textContent = 'Connection error';
+            }
+        }
+        
+        async function updateMemoryCount() {
+            try {
+                const response = await fetch('/memory');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const memCount = data.total_memories || 0;
+                    document.getElementById('memoryCount').textContent = `Memories: ${memCount}`;
+                }
+            } catch (error) {
+                console.error('Memory count update failed:', error);
+            }
+        }
+        
+        function clearChat() {
+            if (confirm('Are you sure you want to clear the chat? This will not delete stored memories.')) {
+                document.getElementById('chatMessages').innerHTML = '';
+                messageCount = 0;
+                document.getElementById('conversationLength').textContent = 'Messages: 0';
+                addWelcomeMessage();
+            }
+        }
+        
+        async function showMemoryStats() {
+            try {
+                const response = await fetch('/memory');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    let statsText = `Memory Statistics:\n`;
+                    statsText += `Total memories: ${data.total_memories}\n`;
+                    if (data.stats.created) {
+                        statsText += `Created: ${new Date(data.stats.created).toLocaleDateString()}\n`;
+                    }
+                    if (data.stats.last_updated) {
+                        statsText += `Last updated: ${new Date(data.stats.last_updated).toLocaleString()}\n`;
+                    }
+                    
+                    alert(statsText);
+                } else {
+                    alert('Failed to load memory statistics');
+                }
+            } catch (error) {
+                alert('Error loading memory statistics');
+            }
+        }
+        
+        // Auto-refresh status every 30 seconds
+        setInterval(checkStatus, 30000);
+        
+    </script>
+</body>
+</html>
