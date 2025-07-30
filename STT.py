@@ -1,11 +1,18 @@
+<<<<<<< HEAD
 import pyaudio  # For recording audio from microphone
 import wave  # For saving audio files
+=======
+# STT.py
+import pyaudio
+import wave
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
 import tempfile
 import os
 import torch
 from faster_whisper import WhisperModel
 
 def get_optimal_device():
+<<<<<<< HEAD
     # Check if NVIDIA GPU is available first
     if torch.cuda.is_available():
         return "cuda"
@@ -13,11 +20,18 @@ def get_optimal_device():
     elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
         return "mps"
     # Use CPU if no GPU is available
+=======
+    if torch.cuda.is_available():
+        return "cuda"
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        return "mps"
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
     else:
         return "cpu"
 
 class SpeechToText:
     def __init__(self):
+<<<<<<< HEAD
         # Audio recording settings
         self.chunk = 1024  # How many audio samples to read at once
         self.format = pyaudio.paInt16  # 16-bit audio format
@@ -47,10 +61,38 @@ class SpeechToText:
         print("\nRecording... Speak now!")
         
         # Open the microphone stream
+=======
+        # Audio settings
+        self.chunk = 1024
+        self.format = pyaudio.paInt16
+        self.channels = 1
+        self.rate = 16000
+        self.record_seconds = 5
+        
+        # Mic
+        self.audio = pyaudio.PyAudio()
+        
+        # Device detection
+        self.device = get_optimal_device()
+        print(f"STT using device: {self.device}")
+        
+        # Whisper STT model with optimal settings
+        if self.device == "cuda":
+            self.model = WhisperModel("base", device="cuda", compute_type="int8_float16")
+        elif self.device == "mps":
+            # MPS doesn't support int8, use float16
+            self.model = WhisperModel("base", device="cpu", compute_type="int8")  # Fallback to CPU for MPS
+        else:
+            self.model = WhisperModel("base", device="cpu", compute_type="int8")
+
+    def record_audio(self):
+        print("\nRecording... Speak now!")
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
         stream = self.audio.open(
             format=self.format,
             channels=self.channels,
             rate=self.rate,
+<<<<<<< HEAD
             input=True,  # We want to record, not play
             frames_per_buffer=self.chunk,
         )
@@ -122,20 +164,74 @@ def transcribe_once(record_seconds: int = 5, device: str = None) -> str:
     stt = SpeechToText()
     
     # Override recording duration if specified
+=======
+            input=True,
+            frames_per_buffer=self.chunk,
+        )
+        frames = []
+        try:
+            for i in range(int(self.rate / self.chunk * self.record_seconds)):
+                frames.append(stream.read(self.chunk))
+        finally:
+            stream.stop_stream()
+            stream.close()
+        return frames
+
+    def save_temp_audio(self, frames):
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+        wf = wave.open(temp_file.name, "wb")
+        wf.setnchannels(self.channels)
+        wf.setsampwidth(self.audio.get_sample_size(self.format))
+        wf.setframerate(self.rate)
+        wf.writeframes(b"".join(frames))
+        wf.close()
+        return temp_file.name
+
+    def transcribe_audio(self, audio_file):
+        try:
+            segments, _ = self.model.transcribe(audio_file, beam_size=5)
+            return "".join(segment.text for segment in segments).strip()
+        except Exception as e:
+            print(f"Transcription error: {e}")
+            return ""
+
+    def listen_and_transcribe(self):
+        frames = self.record_audio()
+        if not frames:
+            return ""
+        audio_file = self.save_temp_audio(frames)
+        text = self.transcribe_audio(audio_file)
+        os.unlink(audio_file)
+        return text
+
+    def cleanup(self):
+        self.audio.terminate()
+
+def transcribe_once(record_seconds: int = 5, device: str = None) -> str:
+    stt = SpeechToText()
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
     stt.record_seconds = record_seconds
     
     # Override device if specified
     if device:
         stt.device = device
+<<<<<<< HEAD
         # Reload model with the specified device
+=======
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
         if device == "cuda":
             stt.model = WhisperModel("base", device="cuda", compute_type="int8_float16")
         else:
             stt.model = WhisperModel("base", device="cpu", compute_type="int8")
     
     try:
+<<<<<<< HEAD
         # Record and transcribe audio
         return stt.listen_and_transcribe() or ""
     finally:
         # Always clean up resources
+=======
+        return stt.listen_and_transcribe() or ""
+    finally:
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
         stt.cleanup()

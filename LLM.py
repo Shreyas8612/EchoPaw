@@ -1,9 +1,14 @@
+<<<<<<< HEAD
+=======
+# LLM.py
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextIteratorStreamer
 import torch
 import time
 import sys
 
 def get_optimal_device():
+<<<<<<< HEAD
     # Check if CUDA GPU is available first
     if torch.cuda.is_available():
         return "cuda"
@@ -44,23 +49,70 @@ try:
         )
     elif _device == "mps":
         # Apple Silicon loading
+=======
+    if torch.cuda.is_available():
+        return "cuda"
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"
+
+MODEL_ID = "lavanyamurugesan123/Llama3.2-3B-Instruct-finetuned-Therapy-oriented"
+
+# Device detection
+_device = get_optimal_device()
+print(f"LLM using device: {_device}")
+
+# Optimal dtype based on device
+if _device == "cuda":
+    _dtype = torch.float16
+elif _device == "mps":
+    _dtype = torch.float16  # MPS supports float16
+else:
+    _dtype = torch.float32  # CPU fallback
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+
+# Load model with device-specific optimizations
+try:
+    if _device == "cuda":
         model = AutoModelForCausalLM.from_pretrained(
             MODEL_ID,
             torch_dtype=_dtype,
             low_cpu_mem_usage=True,
+            device_map="auto"  # Let transformers handle GPU placement
+        )
+    elif _device == "mps":
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
+        model = AutoModelForCausalLM.from_pretrained(
+            MODEL_ID,
+            torch_dtype=_dtype,
+            low_cpu_mem_usage=True,
+<<<<<<< HEAD
         ).to("mps")  # Move to Apple Silicon GPU
     else:
         # CPU loading
+=======
+        ).to("mps")
+    else:
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
         model = AutoModelForCausalLM.from_pretrained(
             MODEL_ID,
             torch_dtype=_dtype,
             low_cpu_mem_usage=True,
+<<<<<<< HEAD
         ).to("cpu")  # Keep on CPU
+=======
+        ).to("cpu")
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
     
     print(f"Model loaded successfully on {_device}")
     
 except Exception as e:
+<<<<<<< HEAD
     # If loading fails, try CPU as backup
+=======
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
     print(f"Error loading model on {_device}: {e}")
     print("Falling back to CPU...")
     _device = "cpu"
@@ -71,7 +123,10 @@ except Exception as e:
         low_cpu_mem_usage=True,
     ).to("cpu")
 
+<<<<<<< HEAD
 # The system prompt that tells the AI how to behave
+=======
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
 SYSTEM = (
     "You are a Psychology Assistant, kind and empathetic. "
     "Use evidence-based CBT & positive-psychology techniques. "
@@ -80,16 +135,20 @@ SYSTEM = (
     "Keep your responses short concise and sweet."
 )
 
+<<<<<<< HEAD
 def count_tokens(text: str) -> int:
     # Convert text to tokens and count them
     return len(tokenizer.encode(text))
 
+=======
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
 def generate_reply(
     user_text: str,
     history: list | None = None,
     system_prompt: str = SYSTEM,
     max_new_tokens: int = 256,
     stream: bool = False,
+<<<<<<< HEAD
 ) -> tuple[str, list, dict]:  # Returns response, history, and performance metrics
     
     # Start with empty history if none provided
@@ -100,27 +159,43 @@ def generate_reply(
     history.append({"role": "user", "content": user_text})
     
     # Build the conversation in the format the model expects
+=======
+) -> tuple[str, list]:
+    if history is None:
+        history = []
+
+    history.append({"role": "user", "content": user_text})
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
     dialogue = (
         "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n"
         f"{system_prompt}<|eot_id|>"
     )
+<<<<<<< HEAD
     
     # Add each turn of the conversation
+=======
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
     for turn in history:
         role_tag = "user" if turn["role"] == "user" else "assistant"
         dialogue += (
             f"<|start_header_id|>{role_tag}<|end_header_id|>\n"
             f"{turn['content']}<|eot_id|>"
         )
+<<<<<<< HEAD
     
     # Add the start tag for the assistant's response
     dialogue += "<|start_header_id|>assistant<|end_header_id|>\n"
 
     # Convert text to tokens and move to the right device
+=======
+    dialogue += "<|start_header_id|>assistant<|end_header_id|>\n"
+
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
     inputs = tokenizer(dialogue, return_tensors="pt").to(_device)
 
     try:
         if stream:
+<<<<<<< HEAD
             # Streaming mode - get tokens one by one as they're generated
             streamer = TextIteratorStreamer(
                 tokenizer,
@@ -131,26 +206,48 @@ def generate_reply(
             start_time = time.time()  # Start measuring generation time
             
             # Set up generation in a separate thread
+=======
+            streamer = TextIteratorStreamer(
+                tokenizer,
+                skip_prompt=True,
+                skip_special_tokens=True
+            )
+            
+            # Use threading for streaming
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
             from threading import Thread
             generation_kwargs = {
                 **inputs,
                 "max_new_tokens": max_new_tokens,
+<<<<<<< HEAD
                 "temperature": 0.7,  # Some randomness in responses
                 "top_p": 0.9,  # Nucleus sampling
                 "do_sample": True,  # Enable sampling
+=======
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "do_sample": True,
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
                 "streamer": streamer,
                 "pad_token_id": tokenizer.eos_token_id
             }
             
+<<<<<<< HEAD
             # Start generation in background thread
             thread = Thread(target=model.generate, kwargs=generation_kwargs)
             thread.start()
             
             # Collect tokens as they come in
+=======
+            thread = Thread(target=model.generate, kwargs=generation_kwargs)
+            thread.start()
+            
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
             reply_text = ""
             for token in streamer:
                 reply_text += token
                 
+<<<<<<< HEAD
             # Wait for generation to complete
             thread.join()
             end_time = time.time()  # Stop measuring time
@@ -235,6 +332,31 @@ def generate_reply(
             
     except Exception as e:
         # Duplicate error handling (this looks like a copy-paste error in original)
+=======
+            thread.join()
+            history.append({"role": "assistant", "content": reply_text.strip()})
+            return reply_text.strip(), history
+        else:
+            with torch.no_grad():  # Save memory
+                output = model.generate(
+                    **inputs,
+                    max_new_tokens=max_new_tokens,
+                    temperature=0.7,
+                    top_p=0.9,
+                    do_sample=True,
+                    pad_token_id=tokenizer.eos_token_id
+                )
+            
+            reply_text = tokenizer.decode(
+                output[0][inputs["input_ids"].shape[1]:],
+                skip_special_tokens=True,
+            ).strip()
+            
+            history.append({"role": "assistant", "content": reply_text})
+            return reply_text, history
+            
+    except Exception as e:
+>>>>>>> 3ca2edab769a3797c454aea5c6a73e0ddce660cc
         print(f"Generation error: {e}")
         fallback_response = "I'm sorry, I'm having trouble processing that right now. Could you try again?"
         history.append({"role": "assistant", "content": fallback_response})
