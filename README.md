@@ -2,8 +2,6 @@
 
 **EchoPaw** is an AI companion system designed to help elderly dementia patients through natural conversation. Built for privacy and empathy, it runs entirely on your local computer without sending any data to the cloud.
 
-![EchoPaw Demo](Web.html)
-
 ## 🎯 What Does EchoPaw Do?
 
 - **Natural Conversations**: Talk to EchoPaw like you would with a friend
